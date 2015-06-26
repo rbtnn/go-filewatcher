@@ -6,6 +6,6 @@
 ## Usage
 
 ```sh
->go run filewatcher.go -d <dir>
+go run filewatcher.go -d {rootdir} [-i {ignorelist}]
 ```
 

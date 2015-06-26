@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -48,14 +49,16 @@ type Table map[string]TT
 
 func main() {
 	root_flag := flag.String("d", "", "rootdir")
+	ignorelist_flag := flag.String("i", "", "ignorelist")
 	flag.Parse()
 	root := *root_flag
+	ignorelist := strings.Split(*ignorelist_flag, ",")
 	_, err := os.Stat(root)
 	if err == nil {
 		table := make(Table, 0)
 		for {
 			time.Sleep(1000 * time.Millisecond)
-			listFiles(root, root, table)
+			listFiles(root, root, table, ignorelist)
 			for k, v := range table {
 				_, err := os.Stat(v.AbstractPath)
 				if err != nil {
@@ -67,16 +70,26 @@ func main() {
 	}
 }
 
-func listFiles(rootPath string, searchPath string, table Table) {
+func listFiles(rootPath string, searchPath string, table Table, ignorelist []string) {
 	fis, err := ioutil.ReadDir(searchPath)
 	if err == nil {
 		for _, fi := range fis {
-			fullPath := filepath.Join(searchPath, fi.Name())
-			if fi.IsDir() {
-				listFiles(rootPath, fullPath, table)
-			} else {
-        relativePath, _ := filepath.Rel(rootPath, fullPath)
-				check(fullPath, relativePath, table)
+			baseName := fi.Name()
+			fullPath := filepath.Join(searchPath, baseName)
+			relativePath, _ := filepath.Rel(rootPath, fullPath)
+			ok := true
+			for _, pattern := range ignorelist {
+				if matched, _ := filepath.Match(pattern, baseName); matched {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				if fi.IsDir() {
+					listFiles(rootPath, fullPath, table, ignorelist)
+				} else {
+					check(fullPath, relativePath, table)
+				}
 			}
 		}
 	}
