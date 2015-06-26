@@ -75,7 +75,8 @@ func listFiles(rootPath string, searchPath string, table Table) {
 			if fi.IsDir() {
 				listFiles(rootPath, fullPath, table)
 			} else {
-				check(fullPath, fi.Name(), table)
+        relativePath, _ := filepath.Rel(rootPath, fullPath)
+				check(fullPath, relativePath, table)
 			}
 		}
 	}
