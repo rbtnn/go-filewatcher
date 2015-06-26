@@ -1,10 +1,13 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"github.com/mattn/go-colorable"
 	"github.com/shiena/ansicolor"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -26,23 +29,7 @@ type TT struct {
 	RelativePath     string
 	LastModifiedTime time.Time
 	Size             int64
-}
-
-func (t *TT) Message(e EventType) {
-	w := ansicolor.NewAnsiColorWriter(colorable.NewColorableStdout())
-	size := strconv.FormatInt(t.Size, 10) + " Bytes"
-	text := "[" + time.Now().Format(time.Stamp) + "] " + string(e) + ": " + t.RelativePath + " (" + size + ")"
-	switch e {
-	case Added:
-		// Yellow
-		fmt.Fprintf(w, "%s%s%s\n", "\x1b[33m", text, "\x1b[0m")
-	case Updated:
-		// Green
-		fmt.Fprintf(w, "%s%s%s\n", "\x1b[32m", text, "\x1b[0m")
-	case Deleted:
-		// Red
-		fmt.Fprintf(w, "%s%s%s\n", "\x1b[31m", text, "\x1b[0m")
-	}
+  Hash             string
 }
 
 type Table map[string]TT
@@ -68,6 +55,37 @@ func main() {
 			}
 		}
 	}
+}
+
+func (t *TT) Message(e EventType) {
+	w := ansicolor.NewAnsiColorWriter(colorable.NewColorableStdout())
+	size := strconv.FormatInt(t.Size, 10) + " Bytes"
+	text := "[" + time.Now().Format(time.Stamp) + "] " + string(e) + ": "
+  text += t.RelativePath + "(" + size + ", " + t.Hash + ")"
+	switch e {
+	case Added:
+		// Yellow
+		fmt.Fprintf(w, "%s%s%s\n", "\x1b[33m", text, "\x1b[0m")
+	case Updated:
+		// Green
+		fmt.Fprintf(w, "%s%s%s\n", "\x1b[32m", text, "\x1b[0m")
+	case Deleted:
+		// Red
+		fmt.Fprintf(w, "%s%s%s\n", "\x1b[31m", text, "\x1b[0m")
+	}
+}
+
+func getSha256(fullPath string) string {
+	hasher := sha256.New()
+	f, err := os.Open(fullPath)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+	if _, err := io.Copy(hasher, f); err != nil {
+		return ""
+	}
+	return hex.EncodeToString(hasher.Sum(nil))[:16]
 }
 
 func listFiles(rootPath string, searchPath string, table Table, ignorelist []string) {
@@ -102,12 +120,12 @@ func check(abstractPath string, relativePath string, table Table) {
 		prev, ok := table[abstractPath]
 		if ok {
 			if prev.LastModifiedTime != lastModifiedTime {
-				v := TT{abstractPath, relativePath, lastModifiedTime, file.Size()}
+				v := TT{abstractPath, relativePath, lastModifiedTime, file.Size(), getSha256(abstractPath)}
 				v.Message(Updated)
 				table[abstractPath] = v
 			}
 		} else {
-			v := TT{abstractPath, relativePath, lastModifiedTime, file.Size()}
+			v := TT{abstractPath, relativePath, lastModifiedTime, file.Size(), getSha256(abstractPath)}
 			v.Message(Added)
 			table[abstractPath] = v
 		}
