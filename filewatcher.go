@@ -31,7 +31,7 @@ type TT struct {
 func (t *TT) Message(e EventType) {
 	w := ansicolor.NewAnsiColorWriter(colorable.NewColorableStdout())
 	size := strconv.FormatInt(t.Size, 10) + " Bytes"
-	text := "[" + t.LastModifiedTime.Format(time.Stamp) + "] " + string(e) + ": " + t.RelativePath + " (" + size + ")"
+	text := "[" + time.Now().Format(time.Stamp) + "] " + string(e) + ": " + t.RelativePath + " (" + size + ")"
 	switch e {
 	case Added:
 		// Yellow
