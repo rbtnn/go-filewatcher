@@ -23,12 +23,12 @@ Useful command line options:
 Watched directory (default: `.`).
 
 
-### `-x {exclude}` _optional_
+### `-x {exclude}`
 
 Execlude file name pattern (default: `.git,.hg,_svn`).
 
 
-### `-d {depth}` _optional_
+### `-d {depth}`
 
 Maximum folder depth for which to watch (default: `0`).
 
