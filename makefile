@@ -5,6 +5,6 @@ else
   TARGET = filewatcher
 endif
 
-$(TARGET): src/filewatcher.go
-	go build -o $(TARGET) src/filewatcher.go
+$(TARGET): src/main.go
+	go build -o $(TARGET) src/main.go
 
