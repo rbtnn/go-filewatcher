@@ -30,5 +30,5 @@ Execlude file name pattern (default: `.git,.hg,_svn`).
 
 ### `-d {depth}`
 
-Maximum folder depth for which to watch (default: `0`).
+Maximum directory depth (default: `0`).
 
