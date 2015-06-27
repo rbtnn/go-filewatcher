@@ -13,35 +13,22 @@ make
 ```
 
 
-## Usage
+## Command line options
 
-__Windows__
-
-```
-filewatcher.exe -r {rootdir} [-i {ignorelist}] [-d {depth}]
-```
-
-__Others__
-
-```
-filewatcher -r {rootdir} [-i {ignorelist}] [-d {depth}]
-```
+Useful command line options:
 
 
-## Option
+### `-w {watchedDir}`
+
+Watched directory (default: `.`).
 
 
-### `-r {rootdir}`
+### `-x {exclude}` _optional_
 
-default: `-r .`
-
-
-### `-i {ignorelist}` optional
-
-default: `-i ".git,.hg,_svn"`
+Execlude file name pattern (default: `.git,.hg,_svn`).
 
 
-### `-d {depth}` optional
+### `-d {depth}` _optional_
 
-default: `-d 0`
+Maximum folder depth for which to watch (default: `0`).
 

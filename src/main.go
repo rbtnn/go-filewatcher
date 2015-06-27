@@ -35,30 +35,30 @@ type Table map[string]TT
 
 type Arguments struct {
 	table      Table
-	rootDir    string
-	ignoreList []string
+	watchedDir string
+	exclude    []string
 	depth      int
 }
 
 func main() {
-	root_flag := flag.String("r", ".", "rootdir")
-	ignorelist_flag := flag.String("i", ".git,.hg,_svn", "ignorelist")
-	depth_flag := flag.Int("d", 0, "depth")
+	watchedDir_flag := flag.String("w", ".", "")
+	exclude_flag := flag.String("x", ".git,.hg,_svn", "")
+	depth_flag := flag.Int("d", 0, "")
 
 	flag.Parse()
 
 	args := Arguments{
 		make(Table, 0),
-		*root_flag,
-		strings.Split(*ignorelist_flag, ","),
+		*watchedDir_flag,
+		strings.Split(*exclude_flag, ","),
 		*depth_flag,
 	}
 
-	_, err := os.Stat(args.rootDir)
+	_, err := os.Stat(args.watchedDir)
 	if err == nil {
 		for {
 			time.Sleep(1000 * time.Millisecond)
-			listFiles(&args, args.rootDir)
+			listFiles(&args, args.watchedDir)
 			for k, v := range args.table {
 				_, err := os.Stat(v.Path)
 				if err != nil {
@@ -108,7 +108,7 @@ func listFiles(args *Arguments, path string) {
 			args.depth--
 			for _, fi := range fis {
 				ok := true
-				for _, pattern := range args.ignoreList {
+				for _, pattern := range args.exclude {
 					if matched, _ := filepath.Match(pattern, fi.Name()); matched {
 						ok = false
 						break
