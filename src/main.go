@@ -62,7 +62,7 @@ func main() {
 			for k, v := range args.table {
 				_, err := os.Stat(v.Path)
 				if err != nil {
-					v.Message(Deleted)
+					v.Message(Deleted, &TT{})
 					delete(args.table, k)
 				}
 			}
@@ -70,20 +70,24 @@ func main() {
 	}
 }
 
-func (t *TT) Message(e EventType) {
+func (t *TT) Message(e EventType, prev *TT) {
 	w := ansicolor.NewAnsiColorWriter(colorable.NewColorableStdout())
-	size := strconv.FormatInt(t.Size, 10) + " Bytes"
 	text := "[" + time.Now().Format(time.Stamp) + "] " + string(e) + ": "
-	text += t.Path + "(" + size + ", " + t.Hash + ")"
 	switch e {
 	case Added:
 		// Yellow
+		size := strconv.FormatInt(t.Size, 10) + " Bytes"
+		text += t.Path + " (" + size + ", " + t.Hash + ")"
 		fmt.Fprintf(w, "%s%s%s\n", "\x1b[33m", text, "\x1b[0m")
 	case Updated:
 		// Green
+		size := strconv.FormatInt(prev.Size, 10) + " -> " + strconv.FormatInt(t.Size, 10) + " Bytes"
+		text += t.Path + " (" + size + ", " + prev.Hash + " -> " + t.Hash + ")"
 		fmt.Fprintf(w, "%s%s%s\n", "\x1b[32m", text, "\x1b[0m")
 	case Deleted:
 		// Red
+		size := strconv.FormatInt(t.Size, 10) + " Bytes"
+		text += t.Path + " (" + size + ", " + t.Hash + ")"
 		fmt.Fprintf(w, "%s%s%s\n", "\x1b[31m", text, "\x1b[0m")
 	}
 }
@@ -134,13 +138,17 @@ func check(args *Arguments, path string) {
 		prev, ok := args.table[path]
 		if ok {
 			if prev.LastModifiedTime != lastModifiedTime {
-				v := TT{path, lastModifiedTime, file.Size(), getSha256(path)}
-				v.Message(Updated)
-				args.table[path] = v
+				hash := getSha256(path)
+				if prev.Hash != hash {
+					v := TT{path, lastModifiedTime, file.Size(), hash}
+					v.Message(Updated, &prev)
+					args.table[path] = v
+				}
 			}
 		} else {
-			v := TT{path, lastModifiedTime, file.Size(), getSha256(path)}
-			v.Message(Added)
+			hash := getSha256(path)
+			v := TT{path, lastModifiedTime, file.Size(), hash}
+			v.Message(Added, &prev)
 			args.table[path] = v
 		}
 	}
